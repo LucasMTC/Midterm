@@ -86,40 +86,6 @@ class EfficientDataStructure:
     def is_empty(self) -> bool:
         return not any(self.batch_blocks) and not any(self.sorted_blocks)
 
-# DATA STRUCTURE RETREIVED FROM AN ONLINE REPO TO HELP WITH THE BMSSP ALGORITHM IMPLEMENTATION
-class BucketQueue:
-    def __init__(self, delta: float, initial_buckets=64):
-        self.delta = delta
-        self.min_idx = 0
-        self.buckets = [deque() for _ in range(initial_buckets)]
-        self.max_idx = -1
-
-    def clear(self):
-        for i in range(self.min_idx, self.max_idx + 1):
-            self.buckets[i].clear()
-        self.min_idx = 0
-        self.max_idx = -1
-
-    def insert(self, v: int, dist: float):
-        idx = int(dist / self.delta)
-        if idx >= len(self.buckets):
-            num_new = idx - len(self.buckets) + 1
-            self.buckets.extend(deque() for _ in range(num_new))
-        self.buckets[idx].append(v)
-        if idx > self.max_idx:
-            self.max_idx = idx
-
-    def extract_min(self) -> tuple:
-        min_idx = self.min_idx
-        while min_idx <= self.max_idx:
-            if self.buckets[min_idx]:
-                v = self.buckets[min_idx].popleft()
-                self.min_idx = min_idx
-                return v, True
-            min_idx += 1
-        return None, False
-
-
 def dijkstra(graph: Graph, source: str, goal: str):
     dist = {v: INFINITY for v in graph.adj}
     prev = {v: None for v in graph.adj}
