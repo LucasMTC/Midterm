@@ -264,21 +264,19 @@ def main():
         graph = Graph()
         for line in raw_graph:
             node = line.split()
-            for i in range(len(node)):
-                if node[i].isnumeric():
-                    node[i] = int(node[i])
+            node[len(node)-1] = int(node[len(node)-1])
             graph.add_edge(node[0], node[1], node[2])
     
     start = time.time()
     print(dijkstra(graph, "A", "E"))
     end = time.time()
     dijkstra_time = end - start
-    print(f"Dijkstra time: {dijkstra_time:.6f}")
+    print(f"Dijkstra time: {dijkstra_time:.6f} seconds")
     start = time.time()
     print(bmssp(graph, "A", "E"))
     end = time.time()
     bmssp_time = end - start
-    print(f"BMSSP time: {bmssp_time:.6f}")
+    print(f"BMSSP time: {bmssp_time:.6f} seconds")
 
 if __name__ == "__main__":
     main()
