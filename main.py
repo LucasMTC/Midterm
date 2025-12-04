@@ -1,6 +1,7 @@
 import heapq
 import math
 import time
+import random
 from collections import deque
 
 INFINITY = float('inf')
@@ -259,6 +260,7 @@ def bmssp(graph, source, goal):
 
 
 def main():
+    print("Tests with a small graph where n = 5")
     with open("input.txt") as file:
         raw_graph = file.readlines()
         graph = Graph()
@@ -277,6 +279,28 @@ def main():
     end = time.time()
     bmssp_time = end - start
     print(f"BMSSP time: {bmssp_time:.6f} seconds")
+
+    print("Tests with a large graph where n = 5000")
+    graph = Graph()
+    for i in range(1, 10001):
+        for j in range(1, 10001):
+            if i != j and random.random() < 0.0005:
+                u = str(i)
+                v = str(j)
+                graph.add_edge(u, v, random.randint(1, 5000))
+    start = time.time()
+    print(dijkstra(graph, "1", "10000"))
+    end = time.time()
+    dijkstra_time = end - start
+    print(f"Dijkstra time: {dijkstra_time:.6f} seconds")
+    start = time.time()
+    print(bmssp(graph, "1", "10000"))
+    end = time.time()
+    bmssp_time = end - start
+    print(f"BMSSP time: {bmssp_time:.6f} seconds")
+    
+
+
 
 if __name__ == "__main__":
     main()
