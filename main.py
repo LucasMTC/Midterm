@@ -2,6 +2,7 @@ import heapq
 import math
 import time
 import random
+import csv
 from collections import deque
 
 INFINITY = float('inf')
@@ -125,8 +126,10 @@ def dijkstra(graph: Graph, source: str, goal: str):
 
 def bmssp(graph, source, goal):
     n = graph.vertices
-    k = int(math.log2(n)**(1/3) * 2) if n > 1 else 1
-    t = int(math.log2(n)**(2/3)) if n > 1 else 1
+    logn = math.log2(n) if n > 1 else 1
+    k = max(3, int(logn**0.5))
+    t = max(2, int(logn**(1/3)))
+
     k = max(k, 3)
     t = max(t, 2)
 
@@ -233,7 +236,7 @@ def bmssp(graph, source, goal):
         if level == 0:
             return base_case(bound, pivots, goal)
         pivots, _ = find_pivots(bound, pivots)
-        block = 2**max(0, (level - 1) * t)
+        block = min(1024, 2**max(0, (level - 1) * t))
         ds = EfficientDataStructure(block, bound)
         for p in pivots:
             if not complete[p] and distances[p] < bound:
@@ -260,47 +263,55 @@ def bmssp(graph, source, goal):
 
 
 def main():
-    print("Tests with a small graph where n = 5")
-    with open("input.txt") as file:
-        raw_graph = file.readlines()
-        graph = Graph()
-        for line in raw_graph:
-            node = line.split()
-            node[len(node)-1] = int(node[len(node)-1])
-            graph.add_edge(node[0], node[1], node[2])
-    
-    start = time.time()
-    print(dijkstra(graph, "A", "E"))
-    end = time.time()
-    dijkstra_time = end - start
-    print(f"Dijkstra time: {dijkstra_time:.6f} seconds")
-    start = time.time()
-    print(bmssp(graph, "A", "E"))
-    end = time.time()
-    bmssp_time = end - start
-    print(f"BMSSP time: {bmssp_time:.6f} seconds")
 
-    print("Tests with a large graph where n = 5000")
-    graph = Graph()
-    for i in range(1, 10001):
-        for j in range(1, 10001):
-            if i != j and random.random() < 0.0005:
-                u = str(i)
-                v = str(j)
-                graph.add_edge(u, v, random.randint(1, 5000))
-    start = time.time()
-    print(dijkstra(graph, "1", "10000"))
-    end = time.time()
-    dijkstra_time = end - start
-    print(f"Dijkstra time: {dijkstra_time:.6f} seconds")
-    start = time.time()
-    print(bmssp(graph, "1", "10000"))
-    end = time.time()
-    bmssp_time = end - start
-    print(f"BMSSP time: {bmssp_time:.6f} seconds")
-    
+    def generate_random_graph(num_vertices, density=0.1, max_weight=20):
+        g = Graph()
+        vertices = [str(i) for i in range(num_vertices)]
+        for v in vertices:
+            g.adj.setdefault(v, [])
+        for u in vertices:
+            for v in vertices:
+                if u != v and random.random() < density:
+                    g.add_edge(u, v, random.randint(1, max_weight))
+        return g, vertices[0], vertices[-1]
 
+    def run_trial(num_vertices, density=0.1):
+        g, source, goal = generate_random_graph(num_vertices, density)
+        start = time.time()
+        dijkstra(g, source, goal)
+        t_dijkstra = time.time() - start
 
+        start = time.time()
+        bmssp(g, source, goal)
+        t_bmssp = time.time() - start
+
+        return t_dijkstra, t_bmssp
+
+    def benchmark_suite(sizes=[10, 100, 1000, 5000], density=0.005, iterations=10):
+        results = []
+        for n in sizes:
+            d_times, b_times = [], []
+            for _ in range(iterations):
+                dt, bt = run_trial(n, density)
+                d_times.append(dt)
+                b_times.append(bt)
+            avg_d = sum(d_times)/len(d_times)
+            avg_b = sum(b_times)/len(b_times)
+            speedup = avg_d/avg_b if avg_b>0 else float('inf')
+            results.append((n, avg_d, avg_b, speedup))
+            print(f"Graph size: {n} | Dijkstra: {avg_d:.6f}s | BMSSP: {avg_b:.6f}s | Speedup: {speedup:.2f}x")
+        return results
+
+    def save_results_csv(results, filename="benchmark_results.csv"):
+        with open(filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Vertices", "Dijkstra", "BMSSP", "Speedup"])
+            for row in results:
+                writer.writerow(row)
+        print(f"Results saved to {filename}")
+
+    results = benchmark_suite()
+    save_results_csv(results)
 
 if __name__ == "__main__":
     main()
